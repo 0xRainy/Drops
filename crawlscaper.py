@@ -1,4 +1,5 @@
 import time
+import os
 from selenium import webdriver
 from bs4 import BeautifulSoup
 
@@ -22,16 +23,53 @@ from bs4 import BeautifulSoup
 #         a.append(''.join(y))
 # [print(i) for i in a]
 
-# This grabs from a list of every active player on all crawl sites
-def GrabData_AllCrawlSites():
-    url = "https://crawl.develz.org/watch.htm"
+
+def grab_data_longest_winning_streaks():
+    """Returns list of players Top Winning Sreaks from
+       http://crawl.akrasiac.org/scoring/streaks.html"""
+
+    url = "http://crawl.akrasiac.org/scoring/streaks.html"
     browser = webdriver.PhantomJS()
     browser.get(url)
-    time.sleep(2)
+    time.sleep(1)
     soup = BeautifulSoup(browser.page_source, "lxml")
     browser.quit()
     table = soup.findChildren('tr')
-    user_dict = {}
+    user_list = ['test', 'test2']
+    for child in table:
+        child = child.findNext('a')
+        child = str(child)
+        user = child.split('>')[1]
+        user = user.split('<')[0]
+        user = user.lower()
+        if user in user_list:
+            pass
+        elif len(user_list) < 20:
+            user_list.append(user)
+        else:
+            pass
+    return user_list
+
+
+# Output super long userlist to txt file for checking results of #
+# grab_data_longest_winning_streaks()                            #
+##################################################################
+# with open('TopStreakPlayers.txt', 'w') as f:
+#     for i in grab_data_longest_winning_streaks():
+#         f.write(i + '\n')
+
+
+def grabdata_all_crawl_sites():
+    """Returns dict of players and site they are using"""
+
+    url = "https://crawl.develz.org/watch.htm"
+    browser = webdriver.PhantomJS()
+    browser.get(url)
+    time.sleep(1)
+    soup = BeautifulSoup(browser.page_source, "lxml")
+    browser.quit()
+    table = soup.findChildren('tr')
+    user_dict = {'test': 'testsite', 'test2': 'testsite2'}
     for child in table:
         child = child.findNext('a')
         child = str(child)
@@ -47,4 +85,15 @@ def GrabData_AllCrawlSites():
     return user_dict
 
 
-print(GrabData_AllCrawlSites())
+TOP_PLAYERS = grab_data_longest_winning_streaks()
+ACTIVE_PLAYERS = grabdata_all_crawl_sites()
+
+FOUND_PLAYERS = []
+for top_player in TOP_PLAYERS:
+    if top_player in ACTIVE_PLAYERS:
+        FOUND_PLAYERS.append(top_player)
+if not FOUND_PLAYERS:
+    print('No Top Players Found')
+else:
+    for i in FOUND_PLAYERS:
+        print(i, ACTIVE_PLAYERS[i])
