@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 url = "http://crawl.akrasiac.org:8080/#lobby"
 browser = webdriver.PhantomJS()
 browser.get(url)
-time.sleep(0.05)
+time.sleep(0.05)  # Change this to some sort of 'Wait for response'
 soup = BeautifulSoup(browser.page_source, "lxml")
 browser.quit()
 table = soup.findAll('td', {"class": "username"})
