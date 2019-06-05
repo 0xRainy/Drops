@@ -42,8 +42,9 @@ def GrabData_AllCrawlSites():
         else:
             user = child.split('-')[-1]
         user = user.split('"')[0]
-        user_dict.update({user: site})
+        # user_dict.update({user: site})
+        user_dict[user] = site
     return user_dict
 
 
-# print(GrabData_AllCrawlSites())
+print(GrabData_AllCrawlSites())
