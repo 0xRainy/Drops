@@ -10,7 +10,7 @@ weebs = {'Maki': 1,
          }
 
 
-for weeb in weebs.keys():
+for weeb in weebs:
     if weebs[weeb] == 0:
         print(str(weeb) + ' is cute!')
 
