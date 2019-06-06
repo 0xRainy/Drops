@@ -3,7 +3,6 @@
     selected leaderboard,is active and playing.
     It provides a link to spectate these players.
 """
-import time
 from pathlib import Path
 from selenium import webdriver
 from bs4 import BeautifulSoup
@@ -106,7 +105,9 @@ def grab_data_all_crawl_sites():
     url = 'https://crawl.develz.org/watch.htm'
     user_table = Scraper(url, 'tr')
     Scraper.browser_get(user_table)
-    user_dict = {'test': 'testsite', 'test2': 'testsite2', 'gammafunk': 'testsite3', 'poop': 'testsite4', 'qooq': 'testsite5'}
+    user_dict = {'test': 'testsite', 'test2': 'testsite2',
+                 'gammafunk': 'testsite3', 'poop': 'testsite4',
+                 'qooq': 'testsite5'}
     for child in user_table.tabledata:
         child = child.findNext('a')
         child = str(child)
@@ -138,7 +139,8 @@ TOP_PLAYERS = (TEMP_TOP_PLAYERS.rstrip('\n')).splitlines()
 
 if FOLLOWED_PLAYERS_FILE.is_file():
     print('Followed Players file found.')
-    print('Added ' + str(len(FOLLOWED_PLAYERS_LIST)) + ' players to watch list...')
+    print('Added ' + str(len(FOLLOWED_PLAYERS_LIST))
+          + ' players to watch list...')
 else:
     print('No Followed Players file found, create one!')
     print('No Followed Players added to watch list!')
@@ -167,7 +169,8 @@ if FOUND_FOLLOWED_PLAYERS:
     print('Found Followed Players')
     print('-------------------------')
 for followed_player in FOUND_FOLLOWED_PLAYERS:
-    print('Player:', followed_player, '- Site:', ACTIVE_PLAYERS[followed_player])
+    print('Player:', followed_player, '- Site:',
+          ACTIVE_PLAYERS[followed_player])
 print('\n')
 if not FOUND_FOLLOWED_PLAYERS:
     print('No Followed Players Found')
