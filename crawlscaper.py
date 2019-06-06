@@ -35,21 +35,21 @@ class Scraper():
         self.url = url
         self.table = table
         self.tabledata = tabledata
+        options = webdriver.ChromeOptions()
+        options.add_argument('--ignore-certificate-errors')
+        options.add_argument('--incognito')
+        options.add_argument('--headless')
+        self.driver = webdriver.Chrome(chrome_options=options)
 
     def browser_get(self):
         """Spawns a hidden browser to scrape data from a dynamic
            website using JavaScript.
         """
-        options = webdriver.ChromeOptions()
-        options.add_argument('--ignore-certificate-errors')
-        options.add_argument('--incognito')
-        options.add_argument('--headless')
-        driver = webdriver.Chrome(chrome_options=options)
-        driver.get(self.url)
+        self.driver.get(self.url)
         soup = None
         while soup is None:
-            soup = BeautifulSoup(driver.page_source, "lxml")
-            driver.quit()
+            soup = BeautifulSoup(self.driver.page_source, "lxml")
+            self.driver.quit()
         # self.tabledata = []
         self.tabledata = soup.findChildren(self.table)
 
@@ -69,6 +69,7 @@ class Leaderboards():
         filename = self.filename
         url = self.leaderboard_type
         leader_table = Scraper(url, 'tr')
+        leader_table.browser_get()
         leaderboard_list = ['test', 'test2']
         for child in leader_table.tabledata:
             child = child.findNext('a')
@@ -104,6 +105,7 @@ def grab_data_all_crawl_sites():
     """
     url = 'https://crawl.develz.org/watch.htm'
     user_table = Scraper(url, 'tr')
+    Scraper.browser_get(user_table)
     user_dict = {'test': 'testsite', 'test2': 'testsite2', 'gammafunk': 'testsite3', 'poop': 'testsite4', 'qooq': 'testsite5'}
     for child in user_table.tabledata:
         child = child.findNext('a')
@@ -129,8 +131,7 @@ if LEADERBOARDS_FILE.is_file():
     print('Leaderbord file found.')
 else:
     print('No Leaderboard file found, creating one...')
-    Leaderboards.grab_leaderboard_data(LEADERBOARDS)
-
+    LEADERBOARDS.grab_leaderboard_data()
 with open(LEADERBOARDS.filename, "r") as afile:
     TEMP_TOP_PLAYERS = afile.read()
 TOP_PLAYERS = (TEMP_TOP_PLAYERS.rstrip('\n')).splitlines()
