@@ -28,6 +28,32 @@ from bs4 import BeautifulSoup
 # [print(i) for i in a]
 
 
+class Scraper():
+    """Sets up the webdriver and scraper.
+    """
+    def __init__(self, url='', table='', tabledata=None):
+        self.url = url
+        self.table = table
+        self.tabledata = tabledata
+
+    def browser_get(self):
+        """Spawns a hidden browser to scrape data from a dynamic
+           website using JavaScript.
+        """
+        options = webdriver.ChromeOptions()
+        options.add_argument('--ignore-certificate-errors')
+        options.add_argument('--incognito')
+        options.add_argument('--headless')
+        driver = webdriver.Chrome(chrome_options=options)
+        driver.get(self.url)
+        soup = None
+        while soup is None:
+            soup = BeautifulSoup(driver.page_source, "lxml")
+            driver.quit()
+        # self.tabledata = []
+        self.tabledata = soup.findChildren(self.table)
+
+
 class Leaderboards():
     """Handles choosing a leaderboard to download data from.
        The filename parameter must include *.txt
@@ -38,18 +64,13 @@ class Leaderboards():
 
     def grab_leaderboard_data(self):
         """Downloads leaderbord data from leaderboard_type (url) and outputs
-           formatted list to file separated by newline."""
+           formatted list to file separated by newline.
+        """
         filename = self.filename
         url = self.leaderboard_type
-        browser = webdriver.PhantomJS()
-        browser.get(url)
-        soup = None
-        while soup is None:
-            soup = BeautifulSoup(browser.page_source, "lxml")
-            browser.quit()
-        table = soup.findChildren('tr')
+        leader_table = Scraper(url, 'tr')
         leaderboard_list = ['test', 'test2']
-        for child in table:
+        for child in leader_table.tabledata:
             child = child.findNext('a')
             child = str(child)
             user = child.split('>')[1]
@@ -78,19 +99,13 @@ def add_followers():
     return followed_players
 
 
-def grabdata_all_crawl_sites():
-    """Returns dict of players and site they are using"""
-
-    url = "https://crawl.develz.org/watch.htm"
-    browser = webdriver.PhantomJS()
-    browser.get(url)
-    time.sleep(1)  # Maybe can do, While soup is false (empty), then when true,
-# continue?
-    soup = BeautifulSoup(browser.page_source, "lxml")
-    browser.quit()
-    table = soup.findChildren('tr')
+def grab_data_all_crawl_sites():
+    """Returns dict of players and site they are using
+    """
+    url = 'https://crawl.develz.org/watch.htm'
+    user_table = Scraper(url, 'tr')
     user_dict = {'test': 'testsite', 'test2': 'testsite2', 'gammafunk': 'testsite3', 'poop': 'testsite4', 'qooq': 'testsite5'}
-    for child in table:
+    for child in user_table.tabledata:
         child = child.findNext('a')
         child = str(child)
         site = child.split('//')[-1]
@@ -127,7 +142,7 @@ else:
     print('No Followed Players file found, create one!')
     print('No Followed Players added to watch list!')
 
-ACTIVE_PLAYERS = grabdata_all_crawl_sites()
+ACTIVE_PLAYERS = grab_data_all_crawl_sites()
 
 FOUND_TOP_PLAYERS = []
 for top_player in TOP_PLAYERS:
