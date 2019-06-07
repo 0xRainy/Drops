@@ -158,9 +158,9 @@ TOP_PLAYERS = set(TOP_PLAYERS)
 if FOLLOWED_PLAYERS_FILE.is_file():
     print('Followed Players file found.')
     print('Added ' + str(len(FOLLOWED_PLAYERS_LIST))
-          + ' players to watch list...')
+          + ' followed players to watch list...\n')
 else:
-    print('No Followed Players added to watch list!')
+    print('No Followed Players added to watch list!\n')
 FOUND_FOLLOWED_PLAYERS = []
 for followed_player in FOLLOWED_PLAYERS_LIST:
     if followed_player in ACTIVE_PLAYERS:
@@ -175,9 +175,10 @@ if FOUND_TOP_PLAYERS:
     print('Found Top 50 Leaderboard Players')
     print('-------------------------')
 for top_player in FOUND_TOP_PLAYERS:
-    print('Player:', top_player, '- Site:', ACTIVE_PLAYERS[top_player], '\n')
+    print('Player:', top_player, '- Site:', ACTIVE_PLAYERS[top_player])
 if not FOUND_TOP_PLAYERS:
-    print('No Top Players Found', '\n')
+    print('No Top Players Found')
+print('\n')
 
 # Print followed players in followed players watch list
 if FOUND_FOLLOWED_PLAYERS:
@@ -185,9 +186,9 @@ if FOUND_FOLLOWED_PLAYERS:
     print('-------------------------')
 for followed_player in FOUND_FOLLOWED_PLAYERS:
     print('Player:', followed_player, '- Spectate:',
-          ACTIVE_PLAYERS[followed_player] + '\n')
+          ACTIVE_PLAYERS[followed_player])
 if not FOUND_FOLLOWED_PLAYERS:
-    print('No Followed Players Found\n')
+    print('No Followed Players Found')
 
 # This works for each individual site #
 #
