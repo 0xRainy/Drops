@@ -47,6 +47,7 @@ channel = options.channel
 mrkvdb = {}
 lines = []
 words = []
+starters = []
 
 
 # Twitch Bot Config
@@ -65,7 +66,7 @@ async def event_ready():
     'Called once when the bot comes online'
     print(f"Bot is online in", channel, "!")
     # ws = markovc._ws
-    # await ws.send_privmsg(nick, f"/me is listening..")
+    # await ws.send_privmsg(os.environ.get('BOT_NICK'), f"/me is listening..")
 
 
 @markovc.event
@@ -119,7 +120,25 @@ def getChain(length):
     elif relative == 'a':
         chain.append(random.choice(list(mrkvdb.keys())))
         print('\nMODE: Any')
-    print('\nChain Start', '\n--------------')
+    elif relative == 'sr':
+        rstarters = []
+        for line in lines:
+            rstarter = line.split(' ', 1)
+            if rstarter[0][0:1:] != '@':
+                rstarters.append(rstarter[0])
+        chain.append(random.choice(rstarters))
+        print('\nMODE: Relative Starters')
+    elif relative == 's':
+        global starters
+        for line in lines:
+            starter = line.split(' ', 1)
+            if starter[0][0:1:] != '@':
+                starters.append(starter[0])
+        chain.append(random.choice(starters))
+        print('\nMODE: Starters')
+
+    print('Perception: ', options.perception)
+    print('Chain Start', '\n--------------')
     print('Seed: ', chain)
     for i in range(length):
         print(mrkvdb.get(chain[i]))
@@ -142,6 +161,8 @@ def dictStat():
     for key, value in mrkvdb.items():
         count += len(value)
     print('# of Values: ', count)
+    if options.mode == 's':
+        print('# of starters: ', len(starters))
     print('mrkvDB length: ', len(mrkvdb)+count, ', mrkvDB size:',
           "%.3f" % (sys.getsizeof(mrkvdb) * (10 ** -6)), 'MB')
     print('------------\n')
