@@ -18,7 +18,8 @@ from twitchio.ext import commands
 # Options
 parser = optparse.OptionParser()
 parser.add_option('-m', '--mode', dest='mode',
-                  help='Relative = r or Any = a [default]')
+                  help='Relative = r (chooses seed from last dbupdate list of words\
+                          or Any = a (chooses any word in the db)[default]')
 parser.add_option('-c', '--channel', dest='channel',
                   help='List of channels separated by commas')
 parser.add_option('-p', '--perception', dest='perception',
@@ -42,7 +43,7 @@ if options.perception is None:
 # Globals
 perception = int(options.perception)
 relative = options.mode
-channel = [options.channel]
+channel = options.channel
 mrkvdb = {}
 lines = []
 words = []
@@ -55,7 +56,7 @@ markovc = commands.Bot(
     client_id=os.environ.get('CLIENT_ID'),
     nick=os.environ.get('BOT_NICK'),
     prefix=os.environ.get('BOT_PREFIX'),
-    initial_channels=channel
+    initial_channels=[channel]
 )
 
 
@@ -64,13 +65,13 @@ async def event_ready():
     'Called once when the bot comes online'
     print(f"Bot is online in", channel, "!")
     # ws = markovc._ws
-    # await ws.send_privmsg('rainyy', f"/me is listening..")
+    # await ws.send_privmsg(nick, f"/me is listening..")
 
 
 @markovc.event
 async def event_message(ctx):
     'Runs every time a message is sent in chat'
-    if ctx.author.name.lower() == 'rainyy':
+    if ctx.author.name.lower() == os.environ.get('BOT_NICK'):
         return
     # await markovc.handle_commands(ctx)
     global lines
@@ -78,7 +79,6 @@ async def event_message(ctx):
     if len(lines) > perception:
         mrkvdbUpdate()
     else:
-        # print(len(lines))
         sys.stdout.write("\r%d%s" % (len(lines), ' lines gathered'))
         sys.stdout.flush()
 
