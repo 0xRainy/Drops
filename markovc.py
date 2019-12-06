@@ -1,19 +1,55 @@
+""" A simple Markov chain twitch bot that can be a fun CLI tool or used as
+    an actual chat bot.
+
+    To setup the twitch bot, create an .env file with the following options:
+        TMI_TOKEN=''
+        CLIENT_ID=''
+        BOT_NICK=''
+        BOT_PREFIX=''
+"""
 import random
 import sys
 import os
+import optparse
 from dotenv import load_dotenv
 from twitchio.ext import commands
 
 
-load_dotenv()
-# length = sys.argv[1]
-relative = sys.argv[2]
-channel = [sys.argv[1]]
+# Options
+parser = optparse.OptionParser()
+parser.add_option('-m', '--mode', dest='mode',
+                  help='Relative = r or Any = a [default]')
+parser.add_option('-c', '--channel', dest='channel',
+                  help='List of channels separated by commas')
+parser.add_option('-p', '--perception', dest='perception',
+                  help='Number of lines before db is updated and chain is\
+                          printed')
+parser.add_option('-v', '--verbose', action="store_true", dest='verbose',
+                  help='Show DB statistics')
+
+(options, args) = parser.parse_args()
+
+if options.channel is None:
+    options.channel = input('Enter at least one channel name: ')
+
+if options.mode is None:
+    options.mode = 'a'
+
+if options.perception is None:
+    options.perception = 20
+
+
+# Globals
+perception = int(options.perception)
+relative = options.mode
+channel = [options.channel]
 mrkvdb = {}
 lines = []
-newChain = ''
+words = []
 
-# twitch bot stuff
+
+# Twitch Bot Config
+load_dotenv()
 markovc = commands.Bot(
     irc_token=os.environ.get('TMI_TOKEN'),
     client_id=os.environ.get('CLIENT_ID'),
@@ -38,20 +74,25 @@ async def event_message(ctx):
         return
     # await markovc.handle_commands(ctx)
     global lines
-    global newChain
     lines.append(ctx.content)
-    if len(lines) > 20:
-        newChain = getChain(random.randint(5, 20))
-        dictStat()
+    if len(lines) > perception:
+        mrkvdbUpdate()
     else:
         # print(len(lines))
         sys.stdout.write("\r%d%s" % (len(lines), ' lines gathered'))
         sys.stdout.flush()
 
 
-def getChain(length):
+@markovc.command(name='chain')
+async def chain(ctx):
+    'Prints a Markov chain'
+    chain = getChain(random.randint(5, 20))
+    await ctx.send(chain)
+
+
+def mrkvdbUpdate():
     global lines
-    global relative
+    global words
     # print("lines", lines)
     for line in lines:
         words = line.split()
@@ -62,13 +103,22 @@ def getChain(length):
                 mrkvdb.setdefault(pair[0], []).append(pair[1])
             else:
                 mrkvdb[words[i]] = []
+    if options.verbose:
+        dictStat()
+    else:
+        print('----RESULT----', '\n', getChain(random.randint(5, 20)))
 
+
+def getChain(length):
+    global relative
+    global lines
     chain = []
     if relative == 'r':
         chain.append(random.choice(words))
-        print('\nRelative MODE')
+        print('\nMODE: Relative')
     elif relative == 'a':
         chain.append(random.choice(list(mrkvdb.keys())))
+        print('\nMODE: Any')
     print('\nChain Start', '\n--------------')
     print('Seed: ', chain)
     for i in range(length):
@@ -84,21 +134,16 @@ def getChain(length):
     return(" ".join(chain))
 
 
-@markovc.command(name='chain')
-async def chain(ctx):
-    chain = getChain(random.randint(5, 12))
-    await ctx.send(chain)
-
-
 def dictStat():
-    print('----RESULT----', '\n', newChain, '\n----mrkvDB Stats----')
+    print('----RESULT----', '\n', getChain(random.randint(5, 20)),
+          '\n----mrkvDB Stats----')
     print('# of Keys: ', len(mrkvdb.keys()))
     count = 0
     for key, value in mrkvdb.items():
         count += len(value)
     print('# of Values: ', count)
     print('mrkvDB length: ', len(mrkvdb)+count, ', mrkvDB size:',
-           "%.3f" % (sys.getsizeof(mrkvdb) * (10 ** -6)),'MB')
+          "%.3f" % (sys.getsizeof(mrkvdb) * (10 ** -6)), 'MB')
     print('------------\n')
     # print('mrkvdb:')
     # sorted_dict = {i: sorted(j) for i, j in mrkvdb.items()}
