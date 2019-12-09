@@ -138,7 +138,8 @@ def getChain(length):
     tries = 0
     path = []
     failed = []
-    while loop == 1 and tries < 20:
+    while loop == 1 and tries < int(options.tries):
+        tries += 1
         if relative == 'r':
             chain.append(random.choice(words))
             mode = 'Relative'
@@ -177,7 +178,6 @@ def getChain(length):
             chain = []
             seed = []
             path = []
-            tries += 1
         elif len(chain) >= int(options.min) or int(options.max):
             loop = 0
     lines = []
