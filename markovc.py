@@ -93,8 +93,8 @@ async def event_ready():
 @markovc.event
 async def event_message(ctx):
     'Runs every time a message is sent in chat'
-    # if ctx.author.name.lower() == os.environ.get('BOT_NICK'):
-    #     return
+    if ctx.author.name.lower() == os.environ.get('BOT_NICK'):
+        return
     if options.listen:
         await markovc.handle_commands(ctx)
     global lines
@@ -130,8 +130,6 @@ def mrkvdbUpdate():
                 mrkvdb.setdefault(pair[0], []).append(pair[1])
             else:
                 mrkvdb[words[i]] = []
-    else:
-        print(getChain(options.max), "\n")
 
 
 def getChain(length):
