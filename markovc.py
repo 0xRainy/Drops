@@ -25,8 +25,15 @@ parser.add_option('-c', '--channel', dest='channel',
 parser.add_option('-p', '--perception', dest='perception',
                   help='Number of lines before db is updated and chain is\
                           printed')
-parser.add_option('-v', '--verbose', action="store_true", dest='verbose',
-                  help='Show DB statistics')
+parser.add_option('-v', '--verbose', dest='verbose',
+                  help='1: Show chain path. 2: Show DB statistics. \
+                  3: Show both.')
+parser.add_option('--min', '--minlength', dest='min',
+                  help='The minimum chain length')
+parser.add_option('--max', '--maxlength', dest='max',
+                  help='The maximum chain length')
+parser.add_option('-t', '--tries', dest='tries',
+                  help='The maximum number of attempts at building a chain')
 
 (options, args) = parser.parse_args()
 
@@ -38,6 +45,18 @@ if options.mode is None:
 
 if options.perception is None:
     options.perception = 20
+
+if options.min is None:
+    options.min = 5
+
+if options.max is None:
+    options.max = 20
+
+if options.tries is None:
+    options.tries = 20
+
+if options.verbose is None:
+    options.verbose = 0
 
 
 # Globals
@@ -87,7 +106,7 @@ async def event_message(ctx):
 @markovc.command(name='chain')
 async def chain(ctx):
     'Prints a Markov chain'
-    chain = getChain(random.randint(5, 20))
+    chain = getChain(options.max)
     await ctx.send(chain)
 
 
@@ -104,58 +123,85 @@ def mrkvdbUpdate():
                 mrkvdb.setdefault(pair[0], []).append(pair[1])
             else:
                 mrkvdb[words[i]] = []
-    if options.verbose:
+    if int(options.verbose) == 2 or int(options.verbose) == 3:
+        print(getChain(options.max), "\n")
         dictStat()
     else:
-        print('----RESULT----', '\n', getChain(random.randint(5, 20)))
+        print(getChain(options.max), "\n")
 
 
 def getChain(length):
     global relative
     global lines
     chain = []
-    if relative == 'r':
-        chain.append(random.choice(words))
-        print('\nMODE: Relative')
-    elif relative == 'a':
-        chain.append(random.choice(list(mrkvdb.keys())))
-        print('\nMODE: Any')
-    elif relative == 'sr':
-        rstarters = []
-        for line in lines:
-            rstarter = line.split(' ', 1)
-            if rstarter[0][0:1:] != '@':
-                rstarters.append(rstarter[0])
-        chain.append(random.choice(rstarters))
-        print('\nMODE: Relative Starters')
-    elif relative == 's':
-        global starters
-        for line in lines:
-            starter = line.split(' ', 1)
-            if starter[0][0:1:] != '@':
-                starters.append(starter[0])
-        chain.append(random.choice(starters))
-        print('\nMODE: Starters')
-
-    print('Perception: ', options.perception)
-    print('Chain Start', '\n--------------')
-    print('Seed: ', chain)
-    for i in range(length):
-        print(mrkvdb.get(chain[i]))
-        if mrkvdb.get(chain[i]):
-            link = random.choice(mrkvdb[chain[i]])
-            chain.append(link)
-        else:
-            print("Unable to build full chain: stopping at", i+1, "of",
-                  length, "words.")
-            break
+    loop = 1
+    tries = 0
+    path = []
+    failed = []
+    while loop == 1 and tries < 20:
+        if relative == 'r':
+            chain.append(random.choice(words))
+            mode = 'Relative'
+        elif relative == 'a':
+            chain.append(random.choice(list(mrkvdb.keys())))
+            mode = 'Any'
+        elif relative == 'sr':
+            rstarters = []
+            for line in lines:
+                rstarter = line.split(' ', 1)
+                if rstarter[0][0:1:] != '@':
+                    rstarters.append(rstarter[0])
+            chain.append(random.choice(rstarters))
+            mode = 'Relative Starters'
+        elif relative == 's':
+            global starters
+            for line in lines:
+                starter = line.split(' ', 1)
+                if starter[0][0:1:] != '@':
+                    starters.append(starter[0])
+            chain.append(random.choice(starters))
+            mode = 'Starters'
+        seed = chain[0]
+        for i in range(int(length)-1):
+            try:
+                if mrkvdb.get(chain[i]):
+                    path.append(mrkvdb.get(chain[i]))
+                    link = random.choice(mrkvdb[chain[i]])
+                    chain.append(link)
+            except IndexError:
+                break
+                # print("Unable to build full chain: stopping at", i+1, "of",
+                #       length, "words.")
+        if len(chain) < int(options.min):
+            failed.append(chain)
+            chain = []
+            seed = []
+            path = []
+            tries += 1
+        elif len(chain) >= int(options.min) or int(options.max):
+            loop = 0
     lines = []
-    return(" ".join(chain))
+    print('\nMODE: ', mode)
+    print('Perception: ', options.perception)
+    if int(options.verbose) == 1 or int(options.verbose) == 3:
+        print('Chain Start', '\n--------------')
+    if len(chain) == 0:
+        if int(options.verbose) == 1 or int(options.verbose) == 3:
+            print('Failed Attempts:')
+            print(*failed, sep="\n")
+        print('----RESULT----')
+        return('Failed to build chain of length ' + str(options.min) + ' in '
+               + str(tries) + ' tries.')
+    else:
+        if int(options.verbose) == 1 or int(options.verbose) == 3:
+            print('Seed: ', seed)
+            print(*path, sep="\n")
+        print('----RESULT in', tries, 'tries---')
+        return(" ".join(chain))
 
 
 def dictStat():
-    print('----RESULT----', '\n', getChain(random.randint(5, 20)),
-          '\n----mrkvDB Stats----')
+    print('----mrkvDB Stats----')
     print('# of Keys: ', len(mrkvdb.keys()))
     count = 0
     for key, value in mrkvdb.items():
