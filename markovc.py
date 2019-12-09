@@ -34,6 +34,8 @@ parser.add_option('--max', '--maxlength', dest='max',
                   help='The maximum chain length')
 parser.add_option('-t', '--tries', dest='tries',
                   help='The maximum number of attempts at building a chain')
+parser.add_option('--listen', action='store_true', dest='listen',
+                  help='Enable twitch chat command listening and response')
 
 (options, args) = parser.parse_args()
 
@@ -91,13 +93,17 @@ async def event_ready():
 @markovc.event
 async def event_message(ctx):
     'Runs every time a message is sent in chat'
-    if ctx.author.name.lower() == os.environ.get('BOT_NICK'):
-        return
-    # await markovc.handle_commands(ctx)
+    # if ctx.author.name.lower() == os.environ.get('BOT_NICK'):
+    #     return
+    if options.listen:
+        await markovc.handle_commands(ctx)
     global lines
     lines.append(ctx.content)
     if len(lines) > perception:
         mrkvdbUpdate()
+        print(getChain(options.max), "\n")
+        if int(options.verbose) == 2 or int(options.verbose) == 3:
+            dictStat()
     else:
         sys.stdout.write("\r%d%s" % (len(lines), ' lines gathered'))
         sys.stdout.flush()
@@ -107,6 +113,7 @@ async def event_message(ctx):
 async def chain(ctx):
     'Prints a Markov chain'
     chain = getChain(options.max)
+    print('Chat command !chain response: ', chain)
     await ctx.send(chain)
 
 
@@ -123,9 +130,6 @@ def mrkvdbUpdate():
                 mrkvdb.setdefault(pair[0], []).append(pair[1])
             else:
                 mrkvdb[words[i]] = []
-    if int(options.verbose) == 2 or int(options.verbose) == 3:
-        print(getChain(options.max), "\n")
-        dictStat()
     else:
         print(getChain(options.max), "\n")
 
