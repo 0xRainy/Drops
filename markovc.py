@@ -19,15 +19,17 @@ from twitchio.ext import commands
 parser = optparse.OptionParser()
 parser.add_option('-m', '--mode', dest='mode',
                   help='Relative = r (chooses seed from last dbupdate list of words\
-                          or Any = a (chooses any word in the db)[default]')
+                          or Any = a (chooses any word in the db)[default]\
+                          or Starters = s, sr (choose a seed from a list of \
+                          words at the beginning of lines)')
 parser.add_option('-c', '--channel', dest='channel',
-                  help='List of channels separated by commas')
+                  help='The channel the bot should listen in.')
 parser.add_option('-p', '--perception', dest='perception',
                   help='Number of lines before db is updated and chain is\
                           printed')
 parser.add_option('-v', '--verbose', dest='verbose',
-                  help='1: Show chain path. 2: Show DB statistics. \
-                  3: Show both.')
+                  help='1: Show chain path 2: Show DB statistics \
+                  3: Show both')
 parser.add_option('--min', '--minlength', dest='min',
                   help='The minimum chain length')
 parser.add_option('--max', '--maxlength', dest='max',
@@ -101,7 +103,7 @@ async def event_message(ctx):
     lines.append(ctx.content)
     if len(lines) > perception:
         mrkvdbUpdate()
-        print(getChain(options.max), "\n")
+        print(getChain(options.max))
         if int(options.verbose) == 2 or int(options.verbose) == 3:
             dictStat()
     else:
@@ -111,12 +113,13 @@ async def event_message(ctx):
 
 @markovc.command(name='chain')
 async def chain(ctx):
-    'Prints a Markov chain'
+    'Prints a Markov chain to chat channel'
     chain = getChain(options.max)
     print('Chat command !chain response: ', chain)
     await ctx.send(chain)
 
 
+# Break up lines and add them to the db
 def mrkvdbUpdate():
     global lines
     global words
@@ -132,6 +135,7 @@ def mrkvdbUpdate():
                 mrkvdb[words[i]] = []
 
 
+# Generate a seed word and attempt to build a chain within constraints
 def getChain(length):
     global relative
     global lines
@@ -162,6 +166,7 @@ def getChain(length):
                 starter = line.split(' ', 1)
                 if starter[0][0:1:] != '@':
                     starters.append(starter[0])
+            starters = list(set(starters))
             chain.append(random.choice(starters))
             mode = 'Starters'
         seed = chain[0]
@@ -173,8 +178,6 @@ def getChain(length):
                     chain.append(link)
             except IndexError:
                 break
-                # print("Unable to build full chain: stopping at", i+1, "of",
-                #       length, "words.")
         if len(chain) < int(options.min):
             failed.append(chain)
             chain = []
@@ -202,6 +205,7 @@ def getChain(length):
         return(" ".join(chain))
 
 
+# Optional printing of db statistics
 def dictStat():
     print('----mrkvDB Stats----')
     print('# of Keys: ', len(mrkvdb.keys()))
