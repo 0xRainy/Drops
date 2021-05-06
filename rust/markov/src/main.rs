@@ -55,25 +55,29 @@ impl Markov {
         let keys = self.map.keys().collect::<Vec<&String>>();
         let mut rng = thread_rng();
 
-        let mut key = keys.choose(&mut rng).expect("could not get random value").to_string();
+        let mut key = keys.choose(&mut rng)
+            .expect("could not get random value").to_string();
         let mut sentence = key.clone();
 
         loop {
             match self.map.get(&key) {
                 Some(values) => {
                     if values.len() >= 2 {
-                        let value = &values.choose(&mut rng).expect("could not get random value");
+                        let value = &values.choose(&mut rng)
+                            .expect("could not get random value");
                         sentence = format!("{} {}", sentence, value);
 
                         key = value.to_string();
                     } else {
                         if thread_rng().gen_range(1..3) == 1 {
-                            let value = &values.choose(&mut rng).expect("could not get random value");
+                            let value = &values.choose(&mut rng)
+                                .expect("could not get random value");
                             sentence = format!("{} {}", sentence, value);
 
                             key = value.to_string();
                         } else {
-                            key = keys.choose(&mut rng).expect("could not get random value").to_string();
+                            key = keys.choose(&mut rng)
+                                .expect("could not get random value").to_string();
                         }
                     }
                 }
