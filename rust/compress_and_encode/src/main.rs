@@ -9,7 +9,7 @@ fn main() {
         .read_line(&mut input)
         .expect("Failed to read line");
     // remove the newline character and carriage return
-    input = input.trim_end_matches("\r\n").to_string();
+    input = input.replace(" ","").to_string();
     let mut compressed = Vec::new();
     let mut count = 1;
     let mut prev = input.chars().next().unwrap();
@@ -22,13 +22,13 @@ fn main() {
             prev = c;
         } else {
             compressed.push(prev);
-            compressed.push(char::from_digit(count, 10).unwrap());
+            compressed.push(count as u8 as char);
             count = 1;
             prev = c;
         }
     }
     compressed.push(prev);
-    compressed.push(char::from_digit(count, 10).unwrap());
+    compressed.push(count as u8 as char);
     if compressed.last().unwrap() == &'1' {
         compressed.pop();
     }
