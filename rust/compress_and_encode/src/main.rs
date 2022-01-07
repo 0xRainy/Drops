@@ -1,14 +1,14 @@
 //import needed modules
 use base64::{decode, encode};
 use std::io;
-// compress repeated characters and appened a count to each character, do not append the count if the
+//TODO: Refactor encoding into its own function and clean up mian function
+// Compress by run-length by appeneding a count to each unique character, do not append the count if the
 // character is repeated only once, then encode the string to base64
 fn main() {
     let mut input = String::new();
     io::stdin()
         .read_line(&mut input)
         .expect("Failed to read line");
-    // remove the newline character and carriage return
     input = input.replace(" ","").to_string();
     let mut compressed = Vec::new();
     let mut count: u32 = 1;
@@ -31,11 +31,10 @@ fn main() {
     }
     pairs = (prev, count);
     compressed.push(pairs);
-    if compressed.last().unwrap() == &(prev, 1) {
-        compressed.pop();
-    }
+    compressed.pop();
+    compressed.pop();
     let encoded = &compressed;
-    let encoded_string = &compressed.iter().map(|(c, n)| format!("{}{}", c, n)).collect::<Vec<String>>().join("").replace("1","").replace("\r","");
+    let encoded_string = &compressed.iter().map(|(c, n)| format!("{}{}", c, n)).collect::<Vec<String>>().join("");
     println!("{:?}", &encoded);
     println!("{}", encode(encoded_string));
     //println!("{}", decode_string(encode(encoded_string)));
@@ -44,10 +43,9 @@ fn main() {
     println!("{}", decode_string(&encode(encoded_string)));
 }
 
-// For decoding the string, we need to reverse the process of encoding
-// First decode the string to a vector of bytes, then split the vector into a vector of strings
-// where each string is a character and a count, then reverse the process of encoding
-// to get the original string
+//Take a String and decode from base64 to a Vec<char>
+//Then reverse the text compression and return the original text as a String
+//TODO: fix count not working for numbers greater than 19 ?????
 fn decode_string(input: &String) -> String {
     let mut decoded = String::new();
     let decoded_input = decode(&input).unwrap().iter().map(|b| *b as char).collect::<Vec<char>>();
@@ -60,18 +58,20 @@ fn decode_string(input: &String) -> String {
         }
         if c.is_numeric() {
             num.push(c.to_digit(10).unwrap() as u8);
+            println!("{:?}", num);
         }
         if num.len() > 0 {
-            count = num.iter().map(|n| n.to_string() + ",").collect::<String>().replace(",","").parse::<u8>().unwrap();
-            num = Vec::new();
+            count = num.iter().map(|n| n.to_string()).collect::<String>().parse::<u8>().unwrap();
+            println!("{}", count);
         }
         if count == 0 {
             decoded.push(prev);
         } else {
             for _ in 0..count-1 {
                 decoded.push(prev);
+                num = Vec::new();
+                count = 0;
             }
-            count = 0;
         }
     }
     decoded
